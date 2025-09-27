@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tractive Pet Tracker</title>
+    <script>
+      // Load Google Maps API
+      window.initGoogleMaps = function() {
+        window.googleMapsLoaded = true;
+        window.dispatchEvent(new CustomEvent('google-maps-loaded'));
+      };
+      
+      // Get API key from environment (will be replaced by Vite)
+      const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Dynamically load Google Maps with API key
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry,visualization,places&callback=initGoogleMaps`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    </script>
+  </body>
+</html>

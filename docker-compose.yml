@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - TRACTIVE_EMAIL=${TRACTIVE_EMAIL}
+      - TRACTIVE_PASSWORD=${TRACTIVE_PASSWORD}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - GOOGLE_ENABLE_GEOCODING=true
+      - GOOGLE_ENABLE_DIRECTIONS=true
+      - GOOGLE_ENABLE_PLACES=true
+      - GOOGLE_ENABLE_ELEVATION=true
+      - HOME_BASE_LAT=${HOME_BASE_LAT:-37.7749}
+      - HOME_BASE_LNG=${HOME_BASE_LNG:--122.4194}
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+      - VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: tractive-network
