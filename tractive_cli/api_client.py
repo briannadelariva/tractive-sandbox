@@ -20,6 +20,7 @@ class TractiveAPIClient:
     
     def __init__(self, auth: TractiveAuth, base_url: Optional[str] = None, debug: bool = False):
         self.auth = auth
+        # Try common Tractive API base URLs
         self.base_url = base_url or "https://graph.tractive.com/3"
         self.debug = debug
         self.session = requests.Session()
@@ -111,41 +112,82 @@ class TractiveAPIClient:
         """Authenticate with Tractive and obtain access token."""
         email, password = self.auth.get_credentials()
         
-        login_data = {
-            "platform_email": email,
-            "platform_token": password,
-            "grant_type": "tractive"
-        }
+        # Try different login patterns that might be used by Tractive
+        login_patterns = [
+            {
+                "endpoint": '/auth/token',
+                "data": {
+                    "platform_email": email,
+                    "platform_token": password,
+                    "grant_type": "tractive"
+                }
+            },
+            {
+                "endpoint": '/login',
+                "data": {
+                    "email": email,
+                    "password": password
+                }
+            },
+            {
+                "endpoint": '/auth/login',
+                "data": {
+                    "username": email,
+                    "password": password
+                }
+            }
+        ]
         
-        try:
-            response = self._make_request('POST', '/auth/token', json=login_data)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.auth.access_token = data.get('access_token')
-                self.auth.user_id = data.get('user_id')
+        for pattern in login_patterns:
+            try:
+                self._debug_log(f"Trying login pattern: {pattern['endpoint']}")
+                response = self._make_request('POST', pattern['endpoint'], json=pattern['data'])
                 
-                # Set authorization header for future requests
-                self.session.headers['Authorization'] = f'Bearer {self.auth.access_token}'
-                return True
-            
-            elif response.status_code in [401, 403]:
-                error_msg = "Invalid credentials"
-                try:
-                    error_data = response.json()
-                    error_msg = error_data.get('message', error_msg)
-                except:
-                    pass
-                print(f"Authentication failed: {error_msg}", file=sys.stderr)
-                sys.exit(2)
-            
-            else:
-                print(f"Login failed with status {response.status_code}", file=sys.stderr)
-                return False
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Handle different response formats
+                    access_token = (data.get('access_token') or 
+                                  data.get('token') or 
+                                  data.get('auth_token') or
+                                  data.get('jwt'))
+                    
+                    user_id = (data.get('user_id') or 
+                              data.get('userId') or 
+                              data.get('id') or
+                              data.get('user', {}).get('id'))
+                    
+                    if access_token:
+                        self.auth.access_token = access_token
+                        self.auth.user_id = str(user_id) if user_id else None
+                        
+                        # Set authorization header for future requests
+                        self.session.headers['Authorization'] = f'Bearer {access_token}'
+                        self._debug_log("Login successful")
+                        return True
                 
-        except Exception as e:
-            self._debug_log(f"Login error: {e}")
-            return False
+                elif response.status_code in [401, 403]:
+                    # Continue trying other patterns for non-auth errors
+                    if pattern == login_patterns[-1]:  # Last pattern
+                        error_msg = "Invalid credentials"
+                        try:
+                            error_data = response.json()
+                            error_msg = error_data.get('message', error_msg)
+                        except:
+                            pass
+                        print(f"Authentication failed: {error_msg}", file=sys.stderr)
+                        sys.exit(2)
+                    continue
+                else:
+                    self._debug_log(f"Login failed with status {response.status_code}")
+                    continue
+                    
+            except Exception as e:
+                self._debug_log(f"Login error with pattern {pattern['endpoint']}: {e}")
+                continue
+        
+        print("All login patterns failed", file=sys.stderr)
+        return False
     
     def get_trackers(self) -> List[Dict[str, Any]]:
         """Get list of user's trackers."""
