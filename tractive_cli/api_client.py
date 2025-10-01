@@ -187,7 +187,8 @@ class TractiveAPIClient:
                 continue
         
         print("All login patterns failed", file=sys.stderr)
-        return False
+        print("Authentication failed", file=sys.stderr)
+        sys.exit(2)
     
     def get_trackers(self) -> List[Dict[str, Any]]:
         """Get list of user's trackers."""
