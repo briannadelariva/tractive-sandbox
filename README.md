@@ -117,6 +117,19 @@ The tool attempts to use these Tractive API endpoints:
 
 ## Development
 
+### Using Dev Container (Recommended)
+
+This project includes a dev container configuration for Visual Studio Code:
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open this repository in VS Code
+3. Click "Reopen in Container" when prompted (or use Command Palette → "Dev Containers: Reopen in Container")
+4. All dependencies will be installed automatically
+
+See [.devcontainer/README.md](.devcontainer/README.md) for more details.
+
+### Manual Setup
+
 ```bash
 # Install in development mode
 pip install -e .
