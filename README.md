@@ -110,7 +110,7 @@ The tool attempts to use these Tractive API endpoints:
 - `POST /auth/token` - Authentication
 - `GET /user/{user_id}/trackers` - List trackers
 - `GET /tracker/{tracker_id}` - Tracker details
-- `GET /tracker/{tracker_id}/positions/latest` - Latest position
+- `GET /tracker/{tracker_id}/pos_report` - Latest position
 - `GET /tracker/{tracker_id}/positions` - Position history
 - `GET /tracker/{tracker_id}/geofences` - Geofences
 - `PUT /tracker/{tracker_id}/live_tracking` - Live tracking control
