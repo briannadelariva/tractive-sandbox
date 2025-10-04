@@ -75,7 +75,7 @@ export TRACTIVE_BACKOFF_MS=1000    # Base backoff time in ms (default: 1000)
 
 ### Global Options
 
-- `--debug`: Enable debug output with sensitive data redaction
+- `--debug`: Enable debug output with sensitive data redaction (shows URLs, status codes, and response bodies for troubleshooting)
 - `--base-url URL`: Override the default API base URL
 - `--help`: Show help message
 
