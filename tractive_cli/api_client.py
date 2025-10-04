@@ -21,13 +21,14 @@ class TractiveAPIClient:
     def __init__(self, auth: TractiveAuth, base_url: Optional[str] = None, debug: bool = False):
         self.auth = auth
         # Try common Tractive API base URLs
-        self.base_url = base_url or "https://graph.tractive.com/3"
+        self.base_url = base_url or "https://graph.tractive.com/3/"
         self.debug = debug
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'tractive-cli/1.0.0',
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-tractive-client': '625e533dc3c3b41c28a669f0'
         })
         
         # Rate limiting configuration
@@ -115,7 +116,7 @@ class TractiveAPIClient:
         # Try different login patterns that might be used by Tractive
         login_patterns = [
             {
-                "endpoint": '/auth/token',
+                "endpoint": 'auth/token',
                 "data": {
                     "platform_email": email,
                     "platform_token": password,
@@ -123,14 +124,14 @@ class TractiveAPIClient:
                 }
             },
             {
-                "endpoint": '/login',
+                "endpoint": 'login',
                 "data": {
                     "email": email,
                     "password": password
                 }
             },
             {
-                "endpoint": '/auth/login',
+                "endpoint": 'auth/login',
                 "data": {
                     "username": email,
                     "password": password
@@ -211,7 +212,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/user/{self.auth.user_id}/trackers')
+        response = self._make_request('GET', f'user/{self.auth.user_id}/trackers')
         
         if response.status_code == 200:
             return response.json()
@@ -224,7 +225,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}')
+        response = self._make_request('GET', f'tracker/{tracker_id}')
         
         if response.status_code == 200:
             return response.json()
@@ -237,7 +238,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/positions/latest')
+        response = self._make_request('GET', f'tracker/{tracker_id}/positions/latest')
         
         if response.status_code == 200:
             return response.json()
@@ -260,7 +261,7 @@ class TractiveAPIClient:
             params['format'] = 'json_segments'
             params['segments'] = max_points
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/positions', params=params)
+        response = self._make_request('GET', f'tracker/{tracker_id}/positions', params=params)
         
         if response.status_code == 200:
             data = response.json()
@@ -280,7 +281,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/geofences')
+        response = self._make_request('GET', f'tracker/{tracker_id}/geofences')
         
         if response.status_code == 200:
             return response.json()
@@ -294,7 +295,7 @@ class TractiveAPIClient:
                 raise RuntimeError("Authentication failed")
         
         data = {'live_tracking': enabled}
-        response = self._make_request('PUT', f'/tracker/{tracker_id}/live_tracking', json=data)
+        response = self._make_request('PUT', f'tracker/{tracker_id}/live_tracking', json=data)
         
         if response.status_code == 200:
             return response.json()
