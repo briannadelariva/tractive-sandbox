@@ -241,7 +241,15 @@ class TractiveAPIClient:
         response = self._make_request('GET', f'tracker/{tracker_id}/pos_report')
         
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            # Handle different response formats
+            if isinstance(data, list):
+                # If it's a list, return the first item or an empty dict
+                return data[0] if data else {}
+            elif isinstance(data, dict):
+                return data
+            else:
+                return {}
         else:
             raise RuntimeError(f"Failed to get latest position: {response.status_code}")
     
