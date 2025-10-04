@@ -145,6 +145,7 @@ class TractiveAPIClient:
                 
                 if response.status_code == 200:
                     data = response.json()
+                    self._debug_log(f"Received 200 OK response")
                     
                     # Handle different response formats
                     access_token = (data.get('access_token') or 
@@ -167,6 +168,14 @@ class TractiveAPIClient:
                         return True
                 
                 elif response.status_code in [401, 403]:
+                    # Log detailed error information
+                    self._debug_log(f"Login failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        self._debug_log(f"Response body: {json.dumps(error_data)}")
+                    except:
+                        self._debug_log(f"Response body: {response.text}")
+                    
                     # Continue trying other patterns for non-auth errors
                     if pattern == login_patterns[-1]:  # Last pattern
                         error_msg = "Invalid credentials"
@@ -180,12 +189,18 @@ class TractiveAPIClient:
                     continue
                 else:
                     self._debug_log(f"Login failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        self._debug_log(f"Response body: {json.dumps(error_data)}")
+                    except:
+                        self._debug_log(f"Response body: {response.text}")
                     continue
                     
             except Exception as e:
                 self._debug_log(f"Login error with pattern {pattern['endpoint']}: {e}")
                 continue
         
+        self._debug_log("All login patterns failed")
         print("All login patterns failed", file=sys.stderr)
         print("Authentication failed", file=sys.stderr)
         sys.exit(2)
