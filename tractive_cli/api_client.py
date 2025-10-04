@@ -238,7 +238,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'tracker/{tracker_id}/positions/latest')
+        response = self._make_request('GET', f'tracker/{tracker_id}/pos_report')
         
         if response.status_code == 200:
             return response.json()
