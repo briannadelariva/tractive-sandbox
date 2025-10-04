@@ -75,7 +75,7 @@ export TRACTIVE_BACKOFF_MS=1000    # Base backoff time in ms (default: 1000)
 
 ### Global Options
 
-- `--debug`: Enable debug output with sensitive data redaction
+- `--debug`: Enable debug output with sensitive data redaction (shows URLs, status codes, and response bodies for troubleshooting)
 - `--base-url URL`: Override the default API base URL
 - `--help`: Show help message
 
@@ -110,12 +110,25 @@ The tool attempts to use these Tractive API endpoints:
 - `POST /auth/token` - Authentication
 - `GET /user/{user_id}/trackers` - List trackers
 - `GET /tracker/{tracker_id}` - Tracker details
-- `GET /tracker/{tracker_id}/positions/latest` - Latest position
+- `GET /tracker/{tracker_id}/pos_report` - Latest position
 - `GET /tracker/{tracker_id}/positions` - Position history
 - `GET /tracker/{tracker_id}/geofences` - Geofences
 - `PUT /tracker/{tracker_id}/live_tracking` - Live tracking control
 
 ## Development
+
+### Using Dev Container (Recommended)
+
+This project includes a dev container configuration for Visual Studio Code:
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open this repository in VS Code
+3. Click "Reopen in Container" when prompted (or use Command Palette → "Dev Containers: Reopen in Container")
+4. All dependencies will be installed automatically
+
+See [.devcontainer/README.md](.devcontainer/README.md) for more details.
+
+### Manual Setup
 
 ```bash
 # Install in development mode

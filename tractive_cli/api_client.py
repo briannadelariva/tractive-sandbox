@@ -21,13 +21,14 @@ class TractiveAPIClient:
     def __init__(self, auth: TractiveAuth, base_url: Optional[str] = None, debug: bool = False):
         self.auth = auth
         # Try common Tractive API base URLs
-        self.base_url = base_url or "https://graph.tractive.com/3"
+        self.base_url = base_url or "https://graph.tractive.com/3/"
         self.debug = debug
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'tractive-cli/1.0.0',
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-tractive-client': '625e533dc3c3b41c28a669f0'
         })
         
         # Rate limiting configuration
@@ -115,7 +116,7 @@ class TractiveAPIClient:
         # Try different login patterns that might be used by Tractive
         login_patterns = [
             {
-                "endpoint": '/auth/token',
+                "endpoint": 'auth/token',
                 "data": {
                     "platform_email": email,
                     "platform_token": password,
@@ -123,14 +124,14 @@ class TractiveAPIClient:
                 }
             },
             {
-                "endpoint": '/login',
+                "endpoint": 'login',
                 "data": {
                     "email": email,
                     "password": password
                 }
             },
             {
-                "endpoint": '/auth/login',
+                "endpoint": 'auth/login',
                 "data": {
                     "username": email,
                     "password": password
@@ -145,6 +146,7 @@ class TractiveAPIClient:
                 
                 if response.status_code == 200:
                     data = response.json()
+                    self._debug_log(f"Received 200 OK response")
                     
                     # Handle different response formats
                     access_token = (data.get('access_token') or 
@@ -167,6 +169,14 @@ class TractiveAPIClient:
                         return True
                 
                 elif response.status_code in [401, 403]:
+                    # Log detailed error information
+                    self._debug_log(f"Login failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        self._debug_log(f"Response body: {json.dumps(error_data)}")
+                    except:
+                        self._debug_log(f"Response body: {response.text}")
+                    
                     # Continue trying other patterns for non-auth errors
                     if pattern == login_patterns[-1]:  # Last pattern
                         error_msg = "Invalid credentials"
@@ -180,14 +190,21 @@ class TractiveAPIClient:
                     continue
                 else:
                     self._debug_log(f"Login failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        self._debug_log(f"Response body: {json.dumps(error_data)}")
+                    except:
+                        self._debug_log(f"Response body: {response.text}")
                     continue
                     
             except Exception as e:
                 self._debug_log(f"Login error with pattern {pattern['endpoint']}: {e}")
                 continue
         
+        self._debug_log("All login patterns failed")
         print("All login patterns failed", file=sys.stderr)
-        return False
+        print("Authentication failed", file=sys.stderr)
+        sys.exit(2)
     
     def get_trackers(self) -> List[Dict[str, Any]]:
         """Get list of user's trackers."""
@@ -195,7 +212,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/user/{self.auth.user_id}/trackers')
+        response = self._make_request('GET', f'user/{self.auth.user_id}/trackers')
         
         if response.status_code == 200:
             return response.json()
@@ -208,7 +225,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}')
+        response = self._make_request('GET', f'tracker/{tracker_id}')
         
         if response.status_code == 200:
             return response.json()
@@ -221,10 +238,18 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/positions/latest')
+        response = self._make_request('GET', f'tracker/{tracker_id}/pos_report')
         
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            # Handle different response formats
+            if isinstance(data, list):
+                # If it's a list, return the first item or an empty dict
+                return data[0] if data else {}
+            elif isinstance(data, dict):
+                return data
+            else:
+                return {}
         else:
             raise RuntimeError(f"Failed to get latest position: {response.status_code}")
     
@@ -244,7 +269,7 @@ class TractiveAPIClient:
             params['format'] = 'json_segments'
             params['segments'] = max_points
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/positions', params=params)
+        response = self._make_request('GET', f'tracker/{tracker_id}/positions', params=params)
         
         if response.status_code == 200:
             data = response.json()
@@ -264,7 +289,7 @@ class TractiveAPIClient:
             if not self.login():
                 raise RuntimeError("Authentication failed")
         
-        response = self._make_request('GET', f'/tracker/{tracker_id}/geofences')
+        response = self._make_request('GET', f'tracker/{tracker_id}/geofences')
         
         if response.status_code == 200:
             return response.json()
@@ -278,7 +303,7 @@ class TractiveAPIClient:
                 raise RuntimeError("Authentication failed")
         
         data = {'live_tracking': enabled}
-        response = self._make_request('PUT', f'/tracker/{tracker_id}/live_tracking', json=data)
+        response = self._make_request('PUT', f'tracker/{tracker_id}/live_tracking', json=data)
         
         if response.status_code == 200:
             return response.json()
